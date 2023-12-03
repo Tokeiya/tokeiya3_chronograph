@@ -1,3 +1,3 @@
 [workspace]
 resolver="2"
-members = ["playground", "tokeiya3_chronograph"]
+members = ["playground", "tokeiya3_chronograph","lockfree_snowflake"]
