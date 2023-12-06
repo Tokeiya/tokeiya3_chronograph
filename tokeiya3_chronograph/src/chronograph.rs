@@ -39,38 +39,81 @@ pub enum Status {
 }
 
 pub struct Chronograph {
-	state: Status,
 	pivot: Option<Instant>,
 	duration: Duration,
 }
 
 impl Chronograph {
 	pub fn new() -> Self {
-		todo!()
+		Chronograph {
+			pivot: None,
+			duration: Duration::new(0, 0),
+		}
 	}
 
 	pub fn start(&mut self) -> Result<Duration, StateError> {
-		todo!()
+		let now = Instant::now();
+
+		if let None = self.pivot {
+			self.pivot = Some(now);
+			Ok(self.duration)
+		} else {
+			Err(StateError::new("Already running."))
+		}
 	}
 
 	pub fn stop(&mut self) -> Duration {
-		todo!()
+		let now = Instant::now();
+
+		if let Some(time) = self.pivot {
+			self.duration += now - time;
+			self.pivot = None;
+		}
+
+		self.duration
 	}
 
 	pub fn elapsed(&self) -> Duration {
-		todo!()
+		let now = Instant::now();
+
+		if let Some(piv) = self.pivot {
+			self.duration + (now - piv)
+		} else {
+			self.duration
+		}
 	}
 
 	pub fn reset(&mut self) -> Duration {
-		todo!()
+		let now = Instant::now();
+
+		if let Some(piv) = self.pivot {
+			let ret = self.duration + (now - piv);
+			self.duration = Duration::new(0, 0);
+			self.pivot = None;
+			ret
+		} else {
+			let ret = self.duration;
+			self.duration = Duration::new(0, 0);
+			ret
+		}
 	}
 
 	pub fn restart(&mut self) -> Duration {
-		todo!()
+		let ret = self.reset();
+		self.start().unwrap();
+		ret
 	}
 
-	pub fn state(&self) -> &Status {
-		todo!()
+	pub fn state(&self) -> Status {
+		const ZERO: Duration = Duration::new(0, 0);
+
+		if let Some(_) = self.pivot {
+			Status::Running
+		} else if self.duration == ZERO {
+			Status::Initial
+		} else {
+			Status::Stopped
+		}
 	}
 }
 
@@ -96,9 +139,6 @@ mod tests {
 			}
 		};
 	}
-	fn almost_eq(actual: &Duration, expected: u64, err: u64) {
-		assert!((*actual - Duration::from_millis(expected)) <= Duration::from_millis(err))
-	}
 
 	fn almost_10ms(actual: &Duration, expected: u64) {
 		assert!((*actual - Duration::from_millis(expected)) <= Duration::from_millis(20))
@@ -116,7 +156,7 @@ mod tests {
 	#[test]
 	fn new_test() {
 		let fixture = Chronograph::new();
-		assert_matches!(fixture.state, Status::Initial);
+		assert_matches!(fixture.state(), Status::Initial);
 		assert_matches!(fixture.pivot, None);
 		assert_eq!(fixture.duration, Duration::new(0, 0));
 	}
