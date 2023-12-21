@@ -42,6 +42,11 @@ pub struct Chronograph {
 	pivot: Option<Instant>,
 	duration: Duration,
 }
+impl Default for Chronograph {
+	fn default() -> Self {
+		Self::new()
+	}
+}
 
 impl Chronograph {
 	pub fn new() -> Self {
@@ -54,7 +59,7 @@ impl Chronograph {
 	pub fn start(&mut self) -> Result<Duration, StateError> {
 		let now = Instant::now();
 
-		if let None = self.pivot {
+		if self.pivot.is_none() {
 			self.pivot = Some(now);
 			Ok(self.duration)
 		} else {
@@ -107,7 +112,7 @@ impl Chronograph {
 	pub fn state(&self) -> Status {
 		const ZERO: Duration = Duration::new(0, 0);
 
-		if let Some(_) = self.pivot {
+		if self.pivot.is_some() {
 			Status::Running
 		} else if self.duration == ZERO {
 			Status::Initial
@@ -120,7 +125,7 @@ impl Chronograph {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use std::time::{Duration, Instant};
+	use std::time::Duration;
 
 	macro_rules! assert_matches {
     ($expression:expr, $pattern:pat $(if $guard:expr)? $(,)?) => {
@@ -130,15 +135,6 @@ mod tests {
         }
     };
 }
-
-	macro_rules! extract {
-		($expression:expr,$pat:pat=>$result:expr) => {
-			match $expression {
-				$pat => $result,
-				_ => unreachable!(),
-			}
-		};
-	}
 
 	fn almost_10ms(actual: &Duration, expected: u64) {
 		assert!((*actual - Duration::from_millis(expected)) <= Duration::from_millis(20))
@@ -235,7 +231,7 @@ mod tests {
 	#[test]
 	fn reset_test() {
 		let mut fixture = Chronograph::new();
-		fixture.start();
+		_ = fixture.start();
 
 		sleep(100);
 
@@ -248,7 +244,7 @@ mod tests {
 		just_eq(&fixture.reset(), 0);
 		assert_matches!(fixture.state(), Status::Initial);
 
-		fixture.start();
+		_ = fixture.start();
 		sleep(100);
 
 		almost_10ms(&fixture.reset(), 100);
