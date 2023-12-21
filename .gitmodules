@@ -1,3 +1,0 @@
-[submodule "lockfree_snowflake"]
-	path = lockfree_snowflake
-	url = https://github.com/Tokeiya/lockfree_snowflake.git
